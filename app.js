@@ -30,8 +30,8 @@ app.use(cookieParser());
 app.use(express.json());
 
 //Routes
-// app.use("/api/auth", authRouter);
-// app.use("/api/users", usersRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/users", usersRouter);
 // app.use("/api/posts", postsRouter);
 
 app.use((req, res, next) => {

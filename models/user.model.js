@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    default: "Regular",
+    default: "regular",
   },
   resetPasswordLink: {
     type: String,
@@ -63,6 +63,7 @@ function validateUser(user) {
     name: Joi.string().min(2).max(255).required(),
     email: Joi.string().min(6).max(255).required().email(),
     password: Joi.string().min(6).max(1024).required(),
+    role: Joi.string(),
   });
 
   return schema.validate(user);
@@ -70,7 +71,7 @@ function validateUser(user) {
 
 //validatePosts --> helper function to validate user posts
 
-function validatePosts(data) {
+function validateUserPosts(data) {
   const schema = Joi.object({
     posts: Joi.array().min(1).required(),
   });
@@ -80,4 +81,4 @@ function validatePosts(data) {
 
 exports.User = User;
 exports.validateUser = validateUser;
-exports.validatePosts = validatePosts;
+exports.validateUserPosts = validateUserPosts;
