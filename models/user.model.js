@@ -1,10 +1,11 @@
-const mongoose = require("mongoose");
-const Joi = require("joi");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const mongoose = require('mongoose');
+const Joi = require('joi');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const moment = require('moment');
 
 //getting environment variables (process.env) through dotenv config.env. remove in prod. configuration.
-require("dotenv").config({ path: "../config/config.env" });
+require('dotenv').config({ path: '../config/config.env' });
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -29,20 +30,32 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     maxlength: 1024,
   },
+  birthDate: {
+    type: Date,
+    default: moment().subtract(18, 'years').format(), //sets default as 18 years before first subscribing
+  },
+  gender: {
+    type: String,
+    enum: ['Female', 'Male', 'Other'],
+    default: 'Other',
+  },
   role: {
     type: String,
-    default: "regular",
+    default: 'Regular',
   },
   resetPasswordLink: {
     type: String,
-    default: "",
+    default: '',
   },
-  createdAt: { type: Date, default: Date.now },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
   posts: Array,
 });
 
 userSchema.methods.generateAuthToken = function () {
-  const jwtKey = process.env.JWT_TOKEN_KEY || "yourTokenKey";
+  const jwtKey = process.env.JWT_TOKEN_KEY || 'yourTokenKey';
   const token = jwt.sign(
     {
       _id: this._id,
@@ -54,7 +67,7 @@ userSchema.methods.generateAuthToken = function () {
   return token;
 };
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 
 //validateUser --> helper function to validate user required fields
 
@@ -63,6 +76,8 @@ function validateUser(user) {
     name: Joi.string().min(2).max(255).required(),
     email: Joi.string().min(6).max(255).required().email(),
     password: Joi.string().min(6).max(1024).required(),
+    birthDate: Joi.date(),
+    gender: Joi.string(),
     role: Joi.string(),
   });
 
