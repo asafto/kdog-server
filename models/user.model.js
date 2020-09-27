@@ -41,6 +41,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
+    enum: ['Regular', 'Admin'],
     default: 'Regular',
   },
   resetPasswordLink: {
@@ -51,7 +52,12 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  posts: Array,
+  posts: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post',
+    },
+  ],
 });
 
 userSchema.methods.generateAuthToken = function () {
@@ -77,11 +83,13 @@ function validateUser(user) {
     email: Joi.string().min(6).max(255).required().email(),
     password: Joi.string().min(6).max(1024).required(),
     birthDate: Joi.date(),
-    gender: Joi.string(),
-    role: Joi.string(),
+    gender: Joi.string().valid('Female', 'Male', 'Other'),
+    role: Joi.string().valid('Regular', 'Admin'),
   });
 
-  return schema.validate(user);
+  return schema.validate(user, {
+    abortEarly: false,
+  });
 }
 
 //validatePosts --> helper function to validate user posts

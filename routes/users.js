@@ -8,17 +8,17 @@ const {
   validateUser,
   validateUserPosts,
 } = require('../models/user.model');
-const auth_mw = require('../middleware/auth.mw');
+const auth = require('../middleware/auth.mw');
 
 //get my user details
-router.get('/me', auth_mw, async (req, res) => {
+router.get('/me', auth, async (req, res) => {
   const user = await User.findById(req.user._id).select('-password');
 
   res.send(user);
 });
 
 //get user details by _id
-router.get('/:_id', auth_mw, async (req, res) => {
+router.get('/:_id', auth, async (req, res) => {
   const user = await User.findById(req.params._id, (err, user) => {
     if (err)
       return res.status(400).send('An error had occurred. Please try again');
@@ -31,7 +31,7 @@ router.get('/:_id', auth_mw, async (req, res) => {
 });
 
 //get all kdog users
-router.get('/', auth_mw, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   const list = await User.find({}).select('-password');
 
   if (!list) return res.status(400).send('There are no users in kdog app!');
@@ -40,8 +40,8 @@ router.get('/', auth_mw, async (req, res) => {
 });
 
 //delete user by id
-router.delete('/:_id', auth_mw, async (req, res) => {
-  const user = await User.findByIdAndRemove(req.params._id, (err, user) => {
+router.delete('/:_id', auth, async (req, res) => {
+  const user = await User.findByIdAndDelete(req.params._id, (err, user) => {
     if (err)
       return res.status(400).send('An error had occurred. Please try again');
 
@@ -51,13 +51,14 @@ router.delete('/:_id', auth_mw, async (req, res) => {
         .send('The user you are trying to delete does not exist');
 
     res.send(user);
-  });
+  }).select('-password');
 });
 
 //create new user
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   const { error } = validateUser(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+  // if (error) return res.status(400).send(error.details[0].message);
+  if (error) return res.status(400).send(error.details.map((err) => err.message));
 
   let user = await User.findOne({ email: req.body.email });
   if (user)
