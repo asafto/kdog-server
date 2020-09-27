@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const Joi = require('joi');
-const _ = require('lodash');
 
 const postSchema = new mongoose.Schema({
   title: {
@@ -16,14 +15,15 @@ const postSchema = new mongoose.Schema({
     trim: true,
     minlength: 2,
     maxlength: 1024,
-  }, 
+  },
   image: {
     type: String,
     trim: true,
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
-  },  
+    ref: 'User',
+  },
   tags: [String],
   likes: [
     {
