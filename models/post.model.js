@@ -21,14 +21,13 @@ const postSchema = new mongoose.Schema({
     trim: true,
   },
   author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  tags: [String],
-  likes: [
-    {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+  },
+  tags: [String],
+  likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
   ],
   createdAt: {

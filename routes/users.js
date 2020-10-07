@@ -19,7 +19,14 @@ router.get('/me', auth, async (req, res) => {
 
 //get user details by _id
 router.get('/:_id', auth, async (req, res) => {
-  const user = await User.findById(req.params._id, (err, user) => {
+  if (req.user.role === 'Regular' && req.params._id !== req.user._id)
+    return res
+      .status(400)
+      .send(
+        'User details can be retrieved only by the same user or by Admin user'
+      );
+
+  const user = await User.findOne({ _id: req.params._id }, (err, user) => {
     if (err)
       return res.status(400).send('An error had occurred. Please try again');
 
@@ -32,6 +39,11 @@ router.get('/:_id', auth, async (req, res) => {
 
 //get all kdog users
 router.get('/', auth, async (req, res) => {
+  if (req.user.role !== 'Admin')
+    return res
+      .status(400)
+      .send('Users information can be retrieved only by Admin user');
+
   const list = await User.find({}).select('-password');
 
   if (!list) return res.status(400).send('There are no users in kdog app!');
@@ -39,30 +51,75 @@ router.get('/', auth, async (req, res) => {
   res.send(list);
 });
 
+//update user details
+//
+
+router.patch('/:_id', auth, async (req, res) => {
+  if (req.user.role === 'Regular' && req.params._id !== req.user._id)
+    return res
+      .status(400)
+      .send(
+        'User details can be updated only by the same user or by Admin user'
+      );
+
+  const { error } = validateUser(req.body);
+
+  if (error)
+    return res.status(400).send(error.details.map((err) => err.message));
+
+  await User.findOneAndUpdate(
+    { _id: req.params._id },
+    req.body,
+    async (err, user) => {
+      if (err)
+        return res.status(400).send('An error had occured. Please try again');
+
+      if (!user)
+        return res
+          .status(400)
+          .send('The user you are trying to update does not exist');
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(user.password, salt);
+
+      user.save(); //needs to improve - redundent with findOneAndUpdate
+      res.send(_.pick(user, '_id', 'name', 'email'));
+    }
+  );
+});
+
 //delete user by id
 router.delete('/:_id', auth, async (req, res) => {
-  const user = await User.findByIdAndDelete(req.params._id, (err, user) => {
-    if (err)
-      return res.status(400).send('An error had occurred. Please try again');
+  if (req.user.role === 'Regular' && req.params._id !== req.user._id)
+    return res
+      .status(400)
+      .send('User can be deleted only by the same user or by Admin user');
 
-    if (!user)
-      return res
-        .status(400)
-        .send('The user you are trying to delete does not exist');
+  const user = await User.findOneAndDelete(
+    { _id: req.params._id },
+    (err, user) => {
+      if (err)
+        return res.status(400).send('An error had occurred. Please try again');
 
-    res.send(user);
-  }).select('-password');
+      if (!user)
+        return res
+          .status(400)
+          .send('The user you are trying to delete does not exist');
+
+      res.send(user);
+    }
+  ).select('-password');
 });
 
 //create new user
-router.post('/', auth, async (req, res) => {
+router.post('/', async (req, res) => {
   const { error } = validateUser(req.body);
-  // if (error) return res.status(400).send(error.details[0].message);
-  if (error) return res.status(400).send(error.details.map((err) => err.message));
+
+  if (error)
+    return res.status(400).send(error.details.map((err) => err.message));
 
   let user = await User.findOne({ email: req.body.email });
-  if (user)
-    return res.status(400).send('User with this email already exists');
+  if (user) return res.status(400).send('User with this email already exists');
 
   user = new User(
     _.pick(req.body, [

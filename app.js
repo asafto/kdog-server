@@ -19,8 +19,9 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
+    useFindAndModify: false
   })
-  .then(() => console.log('Connected to MongoDB...'))
+  .then(() => console.log(`Connected to MongoDB @ ${MONGODB_URI}...`))
   .catch((err) => console.error('Could not connect to MongoDB...'));
 
 //Middleware libs
@@ -32,7 +33,7 @@ app.use(express.json()); // express mw for converting json to javascript objects
 //Routes
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
-// app.use("/api/posts", postsRouter);
+app.use("/api/posts", postsRouter);
 
 app.use((req, res, next) => {
   res.status(404).json({
@@ -44,5 +45,5 @@ app.use((req, res, next) => {
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
-  console.log(`Kdog server is listening on port: ${PORT}...`);
+  console.log(`Kdog server connected. Send requests through http://localhost:${PORT} ...`);
 });
