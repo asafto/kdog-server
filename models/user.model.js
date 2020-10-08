@@ -97,7 +97,7 @@ function validateUser(user) {
 
 function validateUserPosts(data) {
   const schema = Joi.object({
-    posts: Joi.array().min(1).required(),
+    posts: Joi.array().min(1),
   });
 
   return schema.validate(data);

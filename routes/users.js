@@ -10,6 +10,8 @@ const {
 } = require('../models/user.model');
 const auth = require('../middleware/auth.mw');
 
+const { Post } = require('../models/post.model');
+
 //get my user details
 router.get('/me', auth, async (req, res) => {
   const user = await User.findById(req.user._id).select('-password');
@@ -37,6 +39,23 @@ router.get('/:_id', auth, async (req, res) => {
   }).select('-password');
 });
 
+//get all user posts based on user id
+router.get('/:_id/posts', async (req, res) => {
+  if (!req.params._id)
+    return res.status(400).send('You must provide a user id');
+  await User.findOne({ _id: req.params._id }, async (err, user) => {
+    if (err) return res.status(400).send('Such user does not exit');
+
+    const { error } = validateUserPosts(user);
+    if (error)
+      return res.status(400).send(error.details.map((err) => err.message));
+
+    const posts = await Post.find({ _id: { $in: user.posts } }).select('-__v');
+
+    res.send(posts);
+  });
+});
+
 //get all kdog users
 router.get('/', auth, async (req, res) => {
   if (req.user.role !== 'Admin')
@@ -52,7 +71,6 @@ router.get('/', auth, async (req, res) => {
 });
 
 //update user details
-//
 
 router.patch('/:_id', auth, async (req, res) => {
   if (req.user.role === 'Regular' && req.params._id !== req.user._id)
@@ -72,12 +90,12 @@ router.patch('/:_id', auth, async (req, res) => {
     req.body,
     async (err, user) => {
       if (err)
-        return res.status(400).send('An error had occured. Please try again');
+        return res.status(400).send('An error had occured. Please try again.');
 
       if (!user)
         return res
           .status(400)
-          .send('The user you are trying to update does not exist');
+          .send('The user you are trying to update does not exist.');
 
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(user.password, salt);
@@ -97,7 +115,7 @@ router.delete('/:_id', auth, async (req, res) => {
 
   const user = await User.findOneAndDelete(
     { _id: req.params._id },
-    (err, user) => {
+    async (err, user) => {
       if (err)
         return res.status(400).send('An error had occurred. Please try again');
 
@@ -105,6 +123,8 @@ router.delete('/:_id', auth, async (req, res) => {
         return res
           .status(400)
           .send('The user you are trying to delete does not exist');
+      //delete all the deleted user posts
+      await Post.deleteMany({ author: user._id }, (err) => {});
 
       res.send(user);
     }
