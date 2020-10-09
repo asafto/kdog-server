@@ -50,8 +50,14 @@ router.get('/:_id/posts', async (req, res) => {
     if (error)
       return res.status(400).send(error.details.map((err) => err.message));
 
-    const posts = await Post.find({ _id: { $in: user.posts } }).select('-__v');
-
+    const posts = await Post.find({ _id: { $in: user.posts } })
+      .select('-__v')
+      .sort('-createdAt')
+      .limit(Number(req.query.limit || 10))
+      .skip(Number(req.query.offset || 0));
+    
+    if (posts.length == 0) return res.send('There are no users in kdog app!');
+    
     res.send(posts);
   });
 });
@@ -63,7 +69,11 @@ router.get('/', auth, async (req, res) => {
       .status(400)
       .send('Users information can be retrieved only by Admin user');
 
-  const list = await User.find({}).select('-password');
+  const list = await User.find({})
+    .select('-password')
+    .sort('name')
+    .limit(Number(req.query.limit || 20))
+    .skip(Number(req.query.offset || 0));
 
   if (!list) return res.status(400).send('There are no users in kdog app!');
 
@@ -87,7 +97,15 @@ router.patch('/:_id', auth, async (req, res) => {
 
   await User.findOneAndUpdate(
     { _id: req.params._id },
-    req.body,
+    _.pick(req.body, [
+      'name',
+      'email',
+      'password',
+      'birthDate',
+      'gender',
+      'role',
+      'posts',
+    ]),
     async (err, user) => {
       if (err)
         return res.status(400).send('An error had occured. Please try again.');
@@ -124,7 +142,9 @@ router.delete('/:_id', auth, async (req, res) => {
           .status(400)
           .send('The user you are trying to delete does not exist');
       //delete all the deleted user posts
-      await Post.deleteMany({ author: user._id }, (err) => {});
+      await Post.deleteMany({ author: user._id }, (err) => {
+        if (err) return res.status(500).send(err.message);
+      });
 
       res.send(user);
     }
