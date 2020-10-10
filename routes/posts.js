@@ -5,13 +5,14 @@ const _ = require('lodash');
 
 const { Post, validatePost } = require('../models/post.model');
 const { User } = require('../models/user.model');
+const { Comment, validateComment } = require('../models/comment.model');
 
 const upload = require('../middleware/storage.mw');
 const auth = require('../middleware/auth.mw');
 
-//like post
-router.patch('/:_id/like', auth, async (req, res) => {
-  await Post.findOne({ _id: req.params._id }, async (err, post) => {
+//add-remove like
+router.post('/:post_id/like', auth, async (req, res) => {
+  await Post.findOne({ _id: req.params.post_id }, async (err, post) => {
     if (err)
       return res.status(500).send('An error had occurred. Please try again.');
     if (!post)
@@ -27,14 +28,14 @@ router.patch('/:_id/like', auth, async (req, res) => {
     }
     await post.save();
   });
-  Post.findOne({ _id: req.params._id }, async (err, post) => {
+  Post.findOne({ _id: req.params.post_id }, async (err, post) => {
     res.send(post);
   });
 });
 
 //get post by id - open for anonymous users
-router.get('/:_id', async (req, res) => {
-  await Post.findOne({ _id: req.params._id }, async (err, post) => {
+router.get('/:post_id', async (req, res) => {
+  await Post.findOne({ _id: req.params.post_id }, async (err, post) => {
     if (err)
       return res.status(500).send('An error had occurred. Please try again.');
     if (!post)
@@ -58,15 +59,50 @@ router.get('/', async (req, res) => {
 });
 
 //update post
-router.patch('/:_id', auth, upload.single('image'), async (req, res) => {
+router.patch('/:post_id', auth, upload.single('image'), async (req, res) => {
   const { error } = validatePost(req.body);
 
   if (error)
     return res.status(400).send(error.details.map((err) => err.message));
 
   await Post.findOneAndUpdate(
-    { _id: req.params._id },
-    req.body,
+    { _id: req.params.post_id },
+    _.pick(req.body, 'text', 'image'),
+    async (err, post) => {
+      if (err)
+        return res.status(500).send('An error had occurred. Please try again');
+      if (!post)
+        return res
+          .status(400)
+          .send('The post you are trying to update does not exist');
+      if (req.user.role === 'Regular' && req.user._id != post.author)
+        return res
+          .status(400)
+          .send('A post can be updated only by its author or by Admin user');
+
+      //handle post image update
+      if (post.image != req.file.filename) {
+        //delete the replaced post image from the public directory
+        let pathToPostImage = `./public/${post.image}`;
+        fs.unlink(pathToPostImage, (err) => {
+          if (err) throw err;
+        });
+
+        post.image = req.file.filename;
+        post = await post.save();
+      }
+
+      //send back the post with the updated information
+      post = await Post.findOne({ _id: req.params.post_id });
+      res.send(post);
+    }
+  );
+});
+
+//delete post
+router.delete('/:post_id', auth, async (req, res) => {
+  await Post.findOneAndDelete(
+    { _id: req.params.post_id },
     async (err, post) => {
       if (err)
         return res.status(500).send('An error had occurred. Please try again');
@@ -74,53 +110,28 @@ router.patch('/:_id', auth, upload.single('image'), async (req, res) => {
         return res
           .status(400)
           .send('The post you are trying to delete does not exist');
+
+      //allow post deletion only by author or by admin
       if (req.user.role === 'Regular' && req.user._id != post.author)
         return res
           .status(400)
-          .send('A post can be updated only by its author or by Admin user');
+          .send('A post can be deleted only by its author or by Admin user');
 
-      if (post.image != req.file.filename) {
-        post.image = req.file.filename;
-        post = await post.save();
-      }
+      //remove the post from user.posts array
+      await User.findOne({ _id: req.user._id }, (err, user) => {
+        user.posts.pull(req.params.post_id);
+        user.save();
+      });
 
-      //send back the post with the updated information
-      post = await Post.findOne({ _id: req.params._id });
+      //delete the post image from the public directory
+      let pathToPostImage = `./public/${post.image}`;
+      fs.unlink(pathToPostImage, (err) => {
+        if (err) throw err;
+      });
+
       res.send(post);
     }
   );
-});
-
-//delete post
-router.delete('/:_id', auth, async (req, res) => {
-  await Post.findOneAndDelete({ _id: req.params._id }, async (err, post) => {
-    if (err)
-      return res.status(500).send('An error had occurred. Please try again');
-    if (!post)
-      return res
-        .status(400)
-        .send('The post you are trying to delete does not exist');
-
-    //allow post deletion only by author or by admin
-    if (req.user.role === 'Regular' && req.user._id != post.author)
-      return res
-        .status(400)
-        .send('A post can be deleted only by its author or by Admin user');
-
-    //remove the post from user.posts array
-    await User.findOne({ _id: req.user._id }, (err, user) => {
-      user.posts.pull(req.params._id);
-      user.save();
-    });
-
-    //delete the post image from the public directory
-    const pathToFile = `./public/${post.image}`;
-    fs.unlink(pathToFile, (err) => {
-      if (err) throw err;
-    });
-
-    res.send(post);
-  });
 });
 
 //create a new post
@@ -130,7 +141,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
   if (error)
     return res.status(400).send(error.details.map((err) => err.message));
 
-  let post = new Post(_.pick(req.body, ['title', 'text', 'image']));
+  let post = new Post(_.pick(req.body, 'text', 'image'));
   post.author = req.user._id;
   post.image = req.file.filename;
 
@@ -147,7 +158,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
     await user.save();
   });
 
-  res.send(_.pick(post, '_id', 'title', 'author'));
+  res.send(_.pick(post, '_id', 'author', 'createAt'));
 });
 
 module.exports = router;

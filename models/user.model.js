@@ -95,14 +95,14 @@ function validateUser(user) {
 
 //validatePosts --> helper function to validate user posts
 
-function validateUserPosts(data) {
-  const schema = Joi.object({
-    posts: Joi.array().min(1),
-  });
+// function validateUserPosts(data) {
+//   const schema = Joi.object({
+//     posts: Joi.array().min(1),
+//   });
 
-  return schema.validate(data);
-}
+//   return schema.validate(data);
+// }
 
 exports.User = User;
 exports.validateUser = validateUser;
-exports.validateUserPosts = validateUserPosts;
+// exports.validateUserPosts = validateUserPosts;

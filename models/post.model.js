@@ -2,13 +2,6 @@ const mongoose = require('mongoose');
 const Joi = require('joi');
 
 const postSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 2,
-    maxlength: 255,
-  },
   text: {
     type: String,
     required: true,
@@ -21,13 +14,20 @@ const postSchema = new mongoose.Schema({
     trim: true,
   },
   author: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
   },
   tags: [String],
-  likes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+  likes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
+  comments: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
     },
   ],
   createdAt: {
@@ -40,7 +40,6 @@ const Post = mongoose.model('Post', postSchema);
 
 function validatePost(post) {
   const schema = Joi.object({
-    title: Joi.string().min(2).max(255).required(),
     text: Joi.string().min(2).max(1024).required(),
     image: Joi.string(),
     tags: Joi.array().items(Joi.string()),

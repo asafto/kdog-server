@@ -9,6 +9,10 @@ const commentSchema = new mongoose.Schema({
     minlength: 2,
     maxlength: 512,
   },
+  image: {
+    type: String,
+    trim: true,
+  },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -28,6 +32,7 @@ const Comment = mongoose.model('Comment', commentSchema);
 function validateComment(comment) {
   const schema = Joi.object({
     text: Joi.string().min(2).max(512).required(),
+    image: Joi.string(),
   });
 
   return schema.validate(comment, {
