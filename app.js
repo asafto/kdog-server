@@ -26,7 +26,7 @@ mongoose
   .catch((err) => console.error('Could not connect to MongoDB...'));
 
 //Middleware libs
-app.use(morgan('dev'));
+app.use(morgan('combined'));
 app.use(cors()); //Server is enabled for all origins - should be changed in production
 app.use(cookieParser());
 app.use(express.json()); // express mw for converting json to javascript objects

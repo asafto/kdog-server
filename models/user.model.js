@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const Joi = require('joi');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const moment = require('moment');
 
 //getting environment variables (process.env) through dotenv config.env. remove in prod. configuration.
 require('dotenv').config({ path: '../config/config.env' });
@@ -30,9 +28,9 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     maxlength: 1024,
   },
-  birthDate: {
+  birthdate: {
     type: Date,
-    default: moment().subtract(18, 'years').format(), //sets default as 18 years before first subscribing
+    default: Date.now,
   },
   gender: {
     type: String,
@@ -43,10 +41,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['Regular', 'Admin'],
     default: 'Regular',
-  },
-  resetPasswordLink: {
-    type: String,
-    default: '',
   },
   createdAt: {
     type: Date,
@@ -67,7 +61,7 @@ userSchema.methods.generateAuthToken = function () {
       _id: this._id,
       name: this.name,
       email: this.email,
-      role: this.role
+      role: this.role,
     },
     jwtKey
   );
@@ -81,9 +75,9 @@ const User = mongoose.model('User', userSchema);
 function validateUser(user) {
   const schema = Joi.object({
     name: Joi.string().min(2).max(255).required(),
-    email: Joi.string().min(6).max(255).required().email(),
+    email: Joi.string().min(6).max(255).email().required(),
     password: Joi.string().min(6).max(1024).required(),
-    birthDate: Joi.date(),
+    birthdate: Joi.date(),
     gender: Joi.string().valid('Female', 'Male', 'Other'),
     role: Joi.string().valid('Regular', 'Admin'),
   });
