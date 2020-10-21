@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const path = require('path');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
@@ -26,9 +27,10 @@ mongoose
   .catch((err) => console.error('Could not connect to MongoDB...'));
 
 //Middleware libs
-app.use(morgan('combined'));
+app.use(morgan('dev'));
 app.use(cors()); //Server is enabled for all origins - should be changed in production
 app.use(cookieParser());
+app.use('/public', express.static(path.resolve(__dirname, './public'))); // allows service static files (images) from the public folder
 app.use(express.json()); // express mw for converting json to javascript objects
 
 //Routes

@@ -8,7 +8,7 @@ const auth = require('../middleware/auth.mw');
 
 const { Post } = require('../models/post.model');
 
-//get my user details
+//get current user details
 router.get('/me', auth, async (req, res) => {
   const user = await User.findOne({ _id: req.user._id }).select('-password');
 
@@ -26,7 +26,7 @@ router.get('/:user_id', auth, async (req, res) => {
         'User details can be retrieved only by the same user or by Admin user'
       );
 
-  const user = await User.findOne({ _id: req.params.user_id }, (err, user) => {
+  await User.findOne({ _id: req.params.user_id }, (err, user) => {
     if (err)
       return res.status(400).send('An error had occurred. Please try again');
 

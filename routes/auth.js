@@ -17,8 +17,7 @@ router.post('/', async (req, res) => {
 
   const token = await user.generateAuthToken();
 
-  res.cookie('token', token, { httpOnly: true });
-
+  // res.cookie('token', token, { httpOnly: true });
   res.send({ token });
 });
 

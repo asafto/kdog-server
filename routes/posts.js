@@ -5,7 +5,6 @@ const _ = require('lodash');
 
 const { Post, validatePost } = require('../models/post.model');
 const { User } = require('../models/user.model');
-const { Comment, validateComment } = require('../models/comment.model');
 
 const upload = require('../middleware/storage.mw');
 const auth = require('../middleware/auth.mw');
@@ -48,14 +47,15 @@ router.get('/:post_id', async (req, res) => {
 
 //get all posts - open for anonymous users
 router.get('/', async (req, res) => {
-  const list = await Post.find({})
+  const posts = await Post.find({})
     .sort('-createdAt')
-    .limit(Number(req.query.limit || 20))
-    .skip(Number(req.query.offset || 0));
+    // .limit(Number(req.query.limit || 20))
+    // .skip(Number(req.query.offset || 0));
 
-  if (list.length == 0) return res.send('There are no posts in kdog app!');
+  // if (posts.length == 0) return res.send('There are no posts in kdog app!');
+  if (posts.length == 0) return res.send(null);
 
-  res.send(list);
+  res.send(posts);
 });
 
 //update post
