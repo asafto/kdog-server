@@ -141,7 +141,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
   if (error)
     return res.status(400).send(error.details.map((err) => err.message));
 
-  let post = new Post(_.pick(req.body, 'text', 'image'));
+  let post = new Post(_.pick(req.body, 'text', 'image', 'tags'));
   post.author = req.user._id;
   post.image = req.file.filename;
 
@@ -158,7 +158,8 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
     await user.save();
   });
 
-  res.send(_.pick(post, '_id', 'author', 'createAt'));
+  res.send(post);
+  // res.send(_.pick(post, '_id', 'author', 'createAt');
 });
 
 module.exports = router;
