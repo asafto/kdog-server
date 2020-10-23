@@ -15,16 +15,10 @@ router.get('/me', auth, async (req, res) => {
   res.send(user);
 });
 
-//get user details by _id
-router.get('/:user_id', auth, async (req, res) => {
+//get user name by _id (open)
+router.get('/:user_id/name', async (req, res) => {
   if (!req.params.user_id)
     return res.status(400).send('You must provide a user id');
-  if (req.user.role === 'Regular' && req.params.user_id !== req.user._id)
-    return res
-      .status(400)
-      .send(
-        'User details can be retrieved only by the same user or by Admin user'
-      );
 
   await User.findOne({ _id: req.params.user_id }, (err, user) => {
     if (err)
@@ -34,11 +28,11 @@ router.get('/:user_id', auth, async (req, res) => {
       res.status(400).send('The user you are trying to fetch does not exist');
 
     res.send(user);
-  }).select('-password');
+  }).select('name');
 });
 
 //get all user posts based on user id
-router.get('/:user_id/posts', async (req, res) => {
+router.get('/:user_id/posts', auth, async (req, res) => {
   if (!req.params.user_id)
     return res.status(400).send('You must provide a user id');
 
@@ -61,6 +55,28 @@ router.get('/:user_id/posts', async (req, res) => {
 
     res.send(posts);
   });
+});
+
+//get user details by _id
+router.get('/:user_id', auth, async (req, res) => {
+  if (!req.params.user_id)
+    return res.status(400).send('You must provide a user id');
+  if (req.user.role === 'Regular' && req.params.user_id !== req.user._id)
+    return res
+      .status(400)
+      .send(
+        'User details can be retrieved only by the same user or by Admin user'
+      );
+
+  await User.findOne({ _id: req.params.user_id }, (err, user) => {
+    if (err)
+      return res.status(400).send('An error had occurred. Please try again');
+
+    if (!user)
+      res.status(400).send('The user you are trying to fetch does not exist');
+
+    res.send(user);
+  }).select('-password');
 });
 
 //get all kdog users

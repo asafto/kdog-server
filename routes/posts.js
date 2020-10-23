@@ -32,8 +32,8 @@ router.post('/:post_id/like', auth, async (req, res) => {
   });
 });
 
-//get post by id - open for anonymous users
-router.get('/:post_id', async (req, res) => {
+//get post by id
+router.get('/:post_id', auth, async (req, res) => {
   await Post.findOne({ _id: req.params.post_id }, async (err, post) => {
     if (err)
       return res.status(500).send('An error had occurred. Please try again.');
