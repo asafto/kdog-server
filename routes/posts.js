@@ -32,6 +32,27 @@ router.post('/:post_id/like', auth, async (req, res) => {
   });
 });
 
+//get post image
+router.get('/:post_id/:image_name', auth, async (req, res) => {
+  // await Post.findOne({ _id: req.params.post_id }, async (err, post) => {
+  // if (err)
+  //   return res.status(500).send('An error had occurred. Please try again.');
+  // if (!post)
+  //   return res
+  //     .status(400)
+  //     .send('The post you are trying to like does not exist.');
+  const pathToPostImage = `./public/${req.params.image_name}`;
+  fs.readFile(pathToPostImage, async (err, data) => {
+    if (err)
+      return res.status(500).send('An error had occurred. Please try again.');
+    if (!data)
+      return res
+        .status(400)
+        .send('The image you are trying to fetch does not exist.');
+    res.send(data);
+  });
+});
+
 //get post by id
 router.get('/:post_id', auth, async (req, res) => {
   await Post.findOne({ _id: req.params.post_id }, async (err, post) => {
@@ -47,10 +68,9 @@ router.get('/:post_id', auth, async (req, res) => {
 
 //get all posts - open for anonymous users
 router.get('/', async (req, res) => {
-  const posts = await Post.find({})
-    .sort('-createdAt')
-    // .limit(Number(req.query.limit || 20))
-    // .skip(Number(req.query.offset || 0));
+  const posts = await Post.find({}).sort('-createdAt');
+  // .limit(Number(req.query.limit || 20))
+  // .skip(Number(req.query.offset || 0));
 
   // if (posts.length == 0) return res.send('There are no posts in kdog app!');
   if (posts.length == 0) return res.send(null);
@@ -67,7 +87,7 @@ router.patch('/:post_id', auth, upload.single('image'), async (req, res) => {
 
   await Post.findOneAndUpdate(
     { _id: req.params.post_id },
-    _.pick(req.body, 'text', 'image'),
+    _.pick(req.body, 'text', 'image', 'tags'),
     async (err, post) => {
       if (err)
         return res.status(500).send('An error had occurred. Please try again');
