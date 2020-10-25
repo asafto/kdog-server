@@ -27,7 +27,8 @@ router.post('/:post_id/like', auth, async (req, res) => {
     }
     await post.save();
   });
-  Post.findOne({ _id: req.params.post_id }, async (err, post) => {
+  await Post.findOne({ _id: req.params.post_id }, async (err, post) => {
+    if (err) throw err;
     res.send(post);
   });
 });
@@ -46,6 +47,18 @@ router.get('/:post_id/:image_name', auth, async (req, res) => {
     // res.send(data, { headers: { 'content-type': 'image/jpeg' } });
   });
 });
+
+// //get post image with readStream
+// router.get('/:post_id/:image_name', auth, async (req, res) => {
+//   const pathToPostImage = `./public/${req.params.image_name}`;
+//   const readStream = fs.createReadStream(pathToPostImage, { headers: { 'content-type': 'image/jpeg' } });
+//   readStream.on('open', () => { 
+//     readStream.pipe(res);
+//   });
+//   readStream.on('error', (err) => {
+//     res.end(err);
+//   });
+// });
 
 //get post by id
 router.get('/:post_id', auth, async (req, res) => {
