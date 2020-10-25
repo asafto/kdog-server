@@ -34,13 +34,6 @@ router.post('/:post_id/like', auth, async (req, res) => {
 
 //get post image
 router.get('/:post_id/:image_name', auth, async (req, res) => {
-  // await Post.findOne({ _id: req.params.post_id }, async (err, post) => {
-  // if (err)
-  //   return res.status(500).send('An error had occurred. Please try again.');
-  // if (!post)
-  //   return res
-  //     .status(400)
-  //     .send('The post you are trying to like does not exist.');
   const pathToPostImage = `./public/${req.params.image_name}`;
   fs.readFile(pathToPostImage, async (err, data) => {
     if (err)
@@ -50,6 +43,7 @@ router.get('/:post_id/:image_name', auth, async (req, res) => {
         .status(400)
         .send('The image you are trying to fetch does not exist.');
     res.send(data);
+    // res.send(data, { headers: { 'content-type': 'image/jpeg' } });
   });
 });
 
@@ -179,7 +173,6 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
   });
 
   res.send(post);
-  // res.send(_.pick(post, '_id', 'author', 'createAt');
 });
 
 module.exports = router;
