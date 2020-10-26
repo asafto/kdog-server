@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-require('dotenv').config({ path: '../config/config.env' });
+// require('dotenv').config({ path: '../config/config.env' });
 
 module.exports = (req, res, next) => {
   const jwtKey = process.env.JWT_TOKEN_KEY;

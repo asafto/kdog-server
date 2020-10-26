@@ -35,7 +35,8 @@ router.post('/:post_id/like', auth, async (req, res) => {
 
 //get post image
 router.get('/:post_id/:image_name', auth, async (req, res) => {
-  const pathToPostImage = `./public/${req.params.image_name}`;
+  // const pathToPostImage = `./public/${req.params.image_name}`;
+  const pathToPostImage = `./tmp/${req.params.image_name}`;
   fs.readFile(pathToPostImage, async (err, data) => {
     if (err)
       return res.status(500).send('An error had occurred. Please try again.');
@@ -110,7 +111,8 @@ router.patch('/:post_id', auth, upload.single('image'), async (req, res) => {
       //handle post image update
       if (post.image != req.file.filename) {
         //delete the replaced post image from the public directory
-        let pathToPostImage = `./public/${post.image}`;
+        // let pathToPostImage = `./public/${post.image}`;
+        let pathToPostImage = `./tmp/${post.image}`;
         fs.unlink(pathToPostImage, (err) => {
           if (err) throw err;
         });
@@ -151,7 +153,8 @@ router.delete('/:post_id', auth, async (req, res) => {
       });
 
       //delete the post image from the public directory
-      let pathToPostImage = `./public/${post.image}`;
+      // let pathToPostImage = `./public/${post.image}`;
+      let pathToPostImage = `./tmp/${post.image}`;
       fs.unlink(pathToPostImage, (err) => {
         if (err) throw err;
       });
