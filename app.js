@@ -31,7 +31,7 @@ app.use(morgan('dev'));
 app.use(cors()); //Server is enabled for all origins - should be changed in production
 app.use(cookieParser());
 // app.use('/public', express.static(path.resolve(__dirname, './public'))); // allows service static files (images) from the public folder
-app.use('/public', express.static(path.resolve(__dirname, './tmp'))); // allows service static files (images) from the public folder
+app.use('/tmp', express.static(path.resolve(__dirname, './tmp'))); // allows service static files (images) from the public folder
 app.use(express.json()); // express mw for converting json to javascript objects
 
 //Routes
