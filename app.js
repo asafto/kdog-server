@@ -12,7 +12,7 @@ const postsRouter = require('./routes/posts');
 const commentsRouter = require('./routes/comments');
 
 //getting environment variables (process.env) through dotenv config.env. remove in prod. configuration.
-require('dotenv').config({ path: './config/config.env' });
+// require('dotenv').config({ path: './config/config.env' });
 
 //connecting with mongoose to local mongodb
 const MONGODB_URI = process.env.MONGODB_URI || '';
