@@ -3,7 +3,7 @@ const Joi = require('joi');
 const jwt = require('jsonwebtoken');
 
 //getting environment variables (process.env) through dotenv config.env. remove in prod. configuration.
-require('dotenv').config({ path: '../config/config.env' });
+// require('dotenv').config({ path: '../config/config.env' });
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -87,16 +87,5 @@ function validateUser(user) {
   });
 }
 
-//validatePosts --> helper function to validate user posts
-
-// function validateUserPosts(data) {
-//   const schema = Joi.object({
-//     posts: Joi.array().min(1),
-//   });
-
-//   return schema.validate(data);
-// }
-
 exports.User = User;
 exports.validateUser = validateUser;
-// exports.validateUserPosts = validateUserPosts;

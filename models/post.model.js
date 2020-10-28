@@ -13,6 +13,14 @@ const postSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  imageKey: {
+    type: String,
+    trim: true,
+  },
+  imageLocation: {
+    type: String,
+    trim: true,
+  },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
 const _ = require('lodash');
+const AWS = require('aws-sdk');
 
 const { Post, validatePost } = require('../models/post.model');
 const { User } = require('../models/user.model');
 
 const upload = require('../middleware/storage.mw');
 const auth = require('../middleware/auth.mw');
+// require('dotenv').config({ path: './config/config.env' });
 
 //add-remove like
 router.post('/:post_id/like', auth, async (req, res) => {
@@ -34,32 +35,24 @@ router.post('/:post_id/like', auth, async (req, res) => {
 });
 
 //get post image
-router.get('/:post_id/:image_name', auth, async (req, res) => {
-  // const pathToPostImage = `./public/${req.params.image_name}`;
-  const pathToPostImage = `./tmp/${req.params.image_name}`;
-  fs.readFile(pathToPostImage, async (err, data) => {
-    if (err)
-      return res.status(500).send('An error had occurred. Please try again.');
-    if (!data)
-      return res
-        .status(400)
-        .send('The image you are trying to fetch does not exist.');
-    res.send(data);
-    // res.send(data, { headers: { 'content-type': 'image/jpeg' } });
+router.get('/image/:image_key', auth, async (req, res) => {
+  const s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
   });
-});
 
-// //get post image with readStream
-// router.get('/:post_id/:image_name', auth, async (req, res) => {
-//   const pathToPostImage = `./public/${req.params.image_name}`;
-//   const readStream = fs.createReadStream(pathToPostImage, { headers: { 'content-type': 'image/jpeg' } });
-//   readStream.on('open', () => { 
-//     readStream.pipe(res);
-//   });
-//   readStream.on('error', (err) => {
-//     res.end(err);
-//   });
-// });
+  s3.getObject(
+    {
+      Bucket: process.env.AWS_BUCKET,
+      Key: req.params.image_key,
+    },
+    function (err, data) {
+      if (err) throw err;
+      res.sendFile(data);
+    }
+  );
+});
 
 //get post by id
 router.get('/:post_id', auth, async (req, res) => {
@@ -109,15 +102,27 @@ router.patch('/:post_id', auth, upload.single('image'), async (req, res) => {
           .send('A post can be updated only by its author or by Admin user');
 
       //handle post image update
-      if (post.image != req.file.filename) {
+      if (post.imageName != req.file.originalname) {
         //delete the replaced post image from the public directory
-        // let pathToPostImage = `./public/${post.image}`;
-        let pathToPostImage = `./tmp/${post.image}`;
-        fs.unlink(pathToPostImage, (err) => {
-          if (err) throw err;
+        const s3 = new AWS.S3({
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          region: process.env.AWS_REGION,
         });
+        s3.deleteObject(
+          {
+            Bucket: process.env.AWS_BUCKET,
+            Key: post.imageKey,
+          },
+          (error, data) => {
+            if (error) res.status(500).send(error);
+          }
+        );
+        
+        post.image = req.file.originalname;
+        post.imageKey = req.file.key;
+        post.imageLocation = req.file.location;
 
-        post.image = req.file.filename;
         post = await post.save();
       }
 
@@ -153,11 +158,21 @@ router.delete('/:post_id', auth, async (req, res) => {
       });
 
       //delete the post image from the public directory
-      // let pathToPostImage = `./public/${post.image}`;
-      let pathToPostImage = `./tmp/${post.image}`;
-      fs.unlink(pathToPostImage, (err) => {
-        if (err) throw err;
+      const s3 = new AWS.S3({
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: process.env.AWS_REGION,
       });
+
+      s3.deleteObject(
+        {
+          Bucket: process.env.AWS_BUCKET,
+          Key: post.imageKey,
+        },
+        (error, data) => {
+          if (error) res.status(500).send(error);
+        }
+      );
 
       res.send(post);
     }
@@ -172,8 +187,11 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
     return res.status(400).send(error.details.map((err) => err.message));
 
   let post = new Post(_.pick(req.body, 'text', 'image', 'tags'));
+  console.log(req.file);
   post.author = req.user._id;
-  post.image = req.file.filename;
+  post.image = req.file.originalname;
+  post.imageKey = req.file.key;
+  post.imageLocation = req.file.location;
 
   post = await post.save();
 

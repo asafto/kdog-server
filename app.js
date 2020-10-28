@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const path = require('path');
+// const path = require('path');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
@@ -28,21 +28,9 @@ mongoose
 
 //Middleware libs
 app.use(morgan('dev'));
-// app.use(cors()); //Server is enabled for all origins - should be changed in production
-const whitelist = ['http://localhost:3000']
-const corsOptionsDelegate = function (req, callback) {
-  let corsOptions;
-  if (whitelist.indexOf(req.header('Origin')) !== -1) {
-    corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
-  } else {
-    corsOptions = { origin: false } // disable CORS for this request
-  }
-  callback(null, corsOptions) // callback expects two parameters: error and options
-}
-app.use(cors(corsOptionsDelegate));
+app.use(cors()); //Server is enabled for all origins - should be changed in production
 app.use(cookieParser());
 // app.use('/public', express.static(path.resolve(__dirname, './public'))); // allows service static files (images) from the public folder
-app.use('/tmp', express.static(path.resolve(__dirname, './tmp'))); // allows service static files (images) from the public folder
 app.use(express.json()); // express mw for converting json to javascript objects
 
 //Routes
